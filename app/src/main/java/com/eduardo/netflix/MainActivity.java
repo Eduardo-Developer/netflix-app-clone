@@ -13,11 +13,12 @@ import android.widget.TextView;
 
 import com.eduardo.netflix.model.Category;
 import com.eduardo.netflix.model.Movie;
+import com.eduardo.netflix.util.CategoryTask;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements CategoryTask.CategoryLoader {
 
     private MainAdapter mainAdapter;
 
@@ -29,24 +30,22 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView rv_main = findViewById(R.id.recycler_view_main);
 
         List<Category> categories = new ArrayList<>();
-        for (int j = 0; j < 10; j++) {
-            Category category = new Category();
-            category.setName("cat" + j);
-
-            List<Movie> movies = new ArrayList<>();
-            for (int i = 0; i < 30; i++) {
-                Movie movie = new Movie();
-//                movie.setCoverUrl(R.drawable.movie);
-                movies.add(movie);
-            }
-            category.setMovies(movies);
-            categories.add(category);
-        }
+        
 
         mainAdapter = new MainAdapter(categories);
         rv_main.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         rv_main.setAdapter(mainAdapter);
 
+        CategoryTask categoryTask = new CategoryTask(this);
+        categoryTask.setCategoryLoader(this);
+        categoryTask.execute("https://tiagoaguiar.co/api/netflix/home");
+
+    }
+
+    @Override
+    public void onResult(List<Category> categories) {
+        mainAdapter.setCategories(categories);
+        mainAdapter.notifyDataSetChanged();
     }
 
     private static class MovieHolder extends RecyclerView.ViewHolder {
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class MainAdapter extends RecyclerView.Adapter<CategoryHolder>{
-        private final List<Category> categories;
+        private List<Category> categories;
 
         private MainAdapter(List<Category> categories) {
             this.categories = categories;
@@ -95,6 +94,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getItemCount() {
             return categories.size();
+        }
+
+        void setCategories(List<Category> categories) {
+            this.categories.clear();
+            this.categories.addAll(categories);
         }
     }
 
